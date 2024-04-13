@@ -18,7 +18,7 @@ special     [+|\-|*|/|=|;|,|(|)|\[|\]|{|}]
 
 num (({digit}+)|({digit}+)"."({digit}*))(("E"|"e")(("+"|"-")?)({digit}+))?
 wrong_num (({digit}+)|({digit}+)"."({digit}*))(("E"|"e")(("+"|"-")?))
-id {letter}({letter}|{digit})*(("."|"#"|"$"|"_")?({letter}|{digit})*)?
+id {letter}({letter}|{digit})*(("."|"#"|"$"|"_")?({letter}|{digit})+)?
 wrong_id {letter}({letter}|{digit})*("."|"#"|"$"|"_")({notletterdigit}+)
 
 
@@ -44,7 +44,7 @@ wrong_id {letter}({letter}|{digit})*("."|"#"|"$"|"_")({notletterdigit}+)
 {id}                                { return update_col_return(yytext, ID); }
 {comment}                           { yycolumn += strlen(yytext); is_comment = 1; BEGIN(IN_COMMENT); }
 [ \t]                               { yycolumn += strlen(yytext); } // ignore whitespace
-\n                                  { ++yylineno; yycolumn = 1; printf("\n"); }
+\n                                  { ++yylineno; yycolumn = 1; /* printf("\n"); */ }
 {wrong_num}                         { printf("ERR: Invalid number format after exponential notation at line %d, column %d\n", yylineno, yycolumn); }
 {wrong_id}                          { printf("ERR: Invalid identifier format at line %d, column %d\n", yylineno, yycolumn); }
 .                                   { printf("ERR: Unknown character %c at line %d, column %d\n", *yytext, yylineno, yycolumn); 
@@ -58,26 +58,26 @@ wrong_id {letter}({letter}|{digit})*("."|"#"|"$"|"_")({notletterdigit}+)
 }
 %%
 
-int main() {
-    yyin = fopen("testcase.txt", "r");
-    if (!yyin) {
-        printf("ERR: opening file failed\n");
-        return 1;
-    }
+// int main() {
+//     yyin = fopen("testcase.txt", "r");
+//     if (!yyin) {
+//         printf("ERR: opening file failed\n");
+//         return 1;
+//     }
 
-    int token;
-    while ((token = yylex()) != END_OF_FILE) {
-    }
+//     int token;
+//     while ((token = yylex()) != END_OF_FILE) {
+//     }
 
-    fclose(yyin);
-    if(is_comment) {
-        printf("ERR: EOF reached while comment is not closed\n");
-    }
-    return 0;
-}
+//     fclose(yyin);
+//     if(is_comment) {
+//         printf("ERR: EOF reached while comment is not closed\n");
+//     }
+//     return 0;
+// }
 
 int update_col_return(char* text, int ret) {
     yycolumn += strlen(text);
-    printf("%s ", text);
+    // printf("%s ", text);
     return ret;
 }

@@ -367,7 +367,7 @@ static const flex_int16_t yy_accept[73] =
         0,    0,    0,    0,   29,   23,   19,   20,   23,    9,
         9,   16,   11,    9,   13,   17,   17,   17,   17,   17,
        17,   17,   17,   26,   25,   27,   15,   18,   16,   16,
-       21,   10,   14,   12,   17,   17,   17,   17,   17,    2,
+       21,   10,   14,   12,    0,   17,   17,   17,   17,    2,
        17,   17,   17,   17,   26,   24,   16,   21,   16,   22,
        17,   17,   17,   17,    3,   17,   17,   17,   17,    1,
        17,   17,    5,   17,   17,    6,   17,    7,   17,    4,
@@ -898,7 +898,7 @@ case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
 #line 47 "lexer.l"
-{ ++yylineno; yycolumn = 1; printf("\n"); }
+{ ++yylineno; yycolumn = 1; /* printf("\n"); */ }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
@@ -1957,27 +1957,27 @@ void yyfree (void * ptr )
 #line 59 "lexer.l"
 
 
-int main() {
-    yyin = fopen("testcase.txt", "r");
-    if (!yyin) {
-        printf("ERR: opening file failed\n");
-        return 1;
-    }
+// int main() {
+//     yyin = fopen("testcase.txt", "r");
+//     if (!yyin) {
+//         printf("ERR: opening file failed\n");
+//         return 1;
+//     }
 
-    int token;
-    while ((token = yylex()) != END_OF_FILE) {
-    }
+//     int token;
+//     while ((token = yylex()) != END_OF_FILE) {
+//     }
 
-    fclose(yyin);
-    if(is_comment) {
-        printf("ERR: EOF reached while comment is not closed\n");
-    }
-    return 0;
-}
+//     fclose(yyin);
+//     if(is_comment) {
+//         printf("ERR: EOF reached while comment is not closed\n");
+//     }
+//     return 0;
+// }
 
 int update_col_return(char* text, int ret) {
     yycolumn += strlen(text);
-    printf("%s ", text);
+    // printf("%s ", text);
     return ret;
 }
 

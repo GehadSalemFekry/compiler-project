@@ -19,8 +19,8 @@ Before you start, make sure you have the following installed:
 To compile the scanner and parser, execute the following commands in your terminal:
 
 ```bash
-flex -o scanner.c lexer.l         # Generate the scanner C source file from the Lex file
-gcc -o parser scanner.c parser.c  # Compile the scanner and parser together into an executable
+flex -o scanner.cpp lexer.l         # Generate the scanner C source file from the Lex file
+g++ -o parser scanner.cpp parser.cpp  # Compile the scanner and parser together into an executable
 ```
 
 ## Running the Parser

@@ -1,4 +1,4 @@
 a.out
 parser
-scanner.c
-# .DS_Store
+scanner.cpp
+.DS_Store

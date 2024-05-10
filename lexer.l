@@ -4,7 +4,7 @@ int is_comment = 0;
 int yycolumn = 1;
 int update_col_return(char* text, int ret);
 
-int yywrap() {
+extern "C" int yywrap() {
     return 1;
 }
 %}

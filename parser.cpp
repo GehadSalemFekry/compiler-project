@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <iostream>
+using namespace std;
 
 int lookahead;
 
@@ -40,8 +42,8 @@ void mulop();
 void factor();
 
 void match(int expected);
-void syntaxErrorMessage(char *message);
-void syntaxError(char *message, char *lookAheadToken, char *expectedTokens);
+void syntaxErrorMessage(string message);
+void syntaxError(string message, string lookAheadToken, string expectedTokens);
 void syntaxErrorToken(int token, int expectedToken);
 
 void program() {
@@ -323,7 +325,8 @@ int main() {
     if (lookahead != END_OF_FILE) {
         syntaxErrorToken(lookahead, END_OF_FILE);
     }
-    printf("Parsing completed successfully.\n");
+    cout << "Parsing completed successfully.\n" << endl;
+    // printf("Parsing completed successfully.\n");
 }
 
 void match(int expected) {
@@ -334,20 +337,25 @@ void match(int expected) {
     }
 }
 
-void syntaxErrorMessage(char *message) {
-    printf("Syntax error: %s at line %d, column %d\n", message, yylineno, yycolumn);
+void syntaxErrorMessage(string message) {
+    cout << "Syntax error: " << message << " at line " << yylineno << ", column " << yycolumn << "\n";
+    // printf("Syntax error: %s at line %d, column %d\n", message, yylineno, yycolumn);
     exit(1);
 }
 
-void syntaxError(char *message, char *lookAheadToken, char *expectedTokens) {
-    printf("Syntax error: %s at line %d, column %d. Saw '%s' but expected: %s\n", message, yylineno, yycolumn,
-           lookAheadToken, expectedTokens);
+void syntaxError(string message, string lookAheadToken, string expectedTokens) {
+    cout << "Syntax error: " << message << " at line " << yylineno << ", column " << yycolumn << ". Saw '" << lookAheadToken
+         << "' but expected: " << expectedTokens << "\n";
+    // printf("Syntax error: %s at line %d, column %d. Saw '%s' but expected: %s\n", message, yylineno, yycolumn,
+    //        lookAheadToken, expectedTokens);
     exit(1);
 }
 
-char *getTokenName(int token, char *buffer) {
+string getTokenName(int token, string buffer) {
     if (token < 256) {
-        sprintf(buffer, "%c [ASCII %d]", token, token);
+        // For ASCII tokens, return the character
+        buffer = string(1, char(token)) + " [ASCII " + to_string(token) + "]";
+        // sprintf(buffer, "%c [ASCII %d]", token, token);
         return buffer;
     } else {
         // For named tokens, return a descriptive name
@@ -379,17 +387,18 @@ char *getTokenName(int token, char *buffer) {
         case ERROR:
             return "error";
         default:
-            sprintf(buffer, "Unknown Token [%d]", token);
+            buffer = "Unknown Token [" + to_string(token) + "]";
+            // sprintf(buffer, "Unknown Token [%d]", token);
             return buffer;
         }
     }
 }
 
 void syntaxErrorToken(int token, int expectedToken) {
-    char buffer1[50], buffer2[50];
-    char *lookAheadToken = getTokenName(token, buffer1);
-    char *expectedTokenName = getTokenName(expectedToken, buffer2);
-    char buffer[1024];
-    sprintf(buffer, "Unexpected token");
+    string buffer1, buffer2;
+    string lookAheadToken = getTokenName(token, buffer1);
+    string expectedTokenName = getTokenName(expectedToken, buffer2);
+    string buffer = "Unexpected token";
+    // sprintf(buffer, "Unexpected token");
     syntaxError(buffer, lookAheadToken, expectedTokenName);
 }

@@ -1,13 +1,8 @@
 Program main {
-    int count;
-    count = 10
-    while (count > 0) {
-        count = count - 1
-        if (count == 5) {
-            count = count + 1
-        }
-    }
-    while ((count < 1000) {
-        count = count + count
-    }
-}
+	int x5_2;
+	float g;
+	float arr[6;
+	if (g) x5_2=5.9 
+	else 
+		while(5+8) arr[3]=30e2
+}.

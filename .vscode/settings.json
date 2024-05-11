@@ -1,0 +1,13 @@
+{
+  "files.associations": {
+    "__bit_reference": "cpp",
+    "bitset": "cpp",
+    "__memory": "cpp",
+    "limits": "cpp",
+    "ratio": "cpp",
+    "tuple": "cpp",
+    "vector": "cpp",
+    "__node_handle": "cpp",
+    "optional": "cpp"
+  }
+}

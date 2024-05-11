@@ -14,7 +14,7 @@ letter      [a-zA-Z]
 digit       [0-9]
 notletterdigit [^a-zA-Z0-9 ]
 comment     "/*"
-special     [+|\-|*|/|=|;|,|(|)|\[|\]|{|}]
+special     [+|\-|*|/|=|;|,|.|(|)|\[|\]|{|}]
 
 num (({digit}+)|({digit}+)"."({digit}*))(("E"|"e")(("+"|"-")?)({digit}+))?
 wrong_num (({digit}+)|({digit}+)"."({digit}*))(("E"|"e")(("+"|"-")?))

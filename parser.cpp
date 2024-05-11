@@ -1,8 +1,9 @@
 #include "tokens.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <iostream>
+#include <map>
+#include <stdio.h>
+#include <stdlib.h>
 using namespace std;
 
 int lookahead;
@@ -12,9 +13,9 @@ void program();
 void declarationList();
 void declarationListDash();
 void declaration();
-void varDeclaration();
+void varDeclaration(string &var_type, int &var_value);
 void varDeclarationDash();
-void typeSpecifier();
+void typeSpecifier(string &type);
 void params();
 void paramList();
 void paramListDash();
@@ -27,34 +28,46 @@ void statement();
 void selectionStmt();
 void selectionStmtDash();
 void iterationStmt();
-void assignmentStmt();
-void var();
+void assignmentStmt(string &type, int &value);
+void var(string &type, int &value);
 void varDash();
-void expression();
-void expressionDash();
+void expression(string &type, int &value);
+void expressionDash(string &type, int &value);
 void relop();
-void additiveExpression();
-void additiveExpressionDash();
+void additiveExpression(string &type, int &val);
+void additiveExpressionDash(string &type, int &val);
 void addop();
-void term();
-void termDash();
+void term(string &type, int &val);
+void termDash(string &type, int &val);
 void mulop();
-void factor();
+void factor(string &type, int &val);
 
 void match(int expected);
 void syntaxErrorMessage(string message);
 void syntaxError(string message, string lookAheadToken, string expectedTokens);
 void syntaxErrorToken(int token, int expectedToken);
+string getTokenName(int token, string buffer);
+void semanticErrorMessage(string message);
+
+struct symbolTableEntry {
+    string name;
+    string type;
+    int value;
+    int declaration_line_number;
+};
+
+map<string, symbolTableEntry> symbolTable;
 
 void program() {
     // 1. program → Program ID {declaration-list statement-list}
     match(PROGRAM);
+    // TODO: do we need to store the program name?
     match(ID);
     match('{');
     declarationList();
     statementList();
     match('}');
-    // match('.'); 
+    match('.');
 }
 
 void declarationList() {
@@ -72,13 +85,28 @@ void declarationListDash() {
 
 void declaration() {
     // 3. declaration → var-declaration
-    varDeclaration();
+    string var_type;
+    int var_value;
+    varDeclaration(var_type, var_value);
 }
 
-void varDeclaration() {
+void varDeclaration(string &var_type, int &var_value) {
     // 4. var-declaration → type-specifier var-declaration'
-    typeSpecifier();
+
+    string type;
+    typeSpecifier(type);
+    var_type = type;
+    var_value = 0;
+
+    string id = yytext;
     match(ID);
+    // Check if the variable is already declared
+    if (symbolTable.count(id) > 0) {
+        semanticErrorMessage("The variable " + id + " is already declared at line " +
+                             to_string(symbolTable[id].declaration_line_number));
+    }
+    symbolTable[id] = {id, type, var_value, yylineno};
+    // TODO: what if the variable is an array?
     varDeclarationDash();
 }
 
@@ -92,17 +120,20 @@ void varDeclarationDash() {
     match(';');
 }
 
-void typeSpecifier() {
+void typeSpecifier(string &type) {
     // 5. type-specifier → int | float
     if (lookahead == INT) {
         match(INT);
+        type = "INT";
     } else if (lookahead == FLOAT) {
         match(FLOAT);
+        type = "FLOAT";
     } else {
         syntaxErrorMessage("Unexpected Type Specifier");
     }
 }
 
+// TODO: not using in the grammar at all.
 void params() {
     // 7. params → param-list | void
     if (lookahead == VOID) {
@@ -129,7 +160,9 @@ void paramListDash() {
 
 void param() {
     // 9. param → type-specifier ID param'
-    typeSpecifier();
+
+    string type;
+    typeSpecifier(type);
     match(ID);
     paramDash();
 }
@@ -167,9 +200,12 @@ void statementListDash() {
 
 void statement() {
     // 13. statement -> assignment-stmt | compound-stmt | selection-stmt | iteration-stmt
+    string type;
+    int value;
+
     switch (lookahead) {
     case ID:
-        assignmentStmt();
+        assignmentStmt(type, value);
         break;
     case '{':
         compoundStmt();
@@ -187,9 +223,12 @@ void statement() {
 
 void selectionStmt() {
     // 15. selection-stmt -> if ( expression ) statement selection-stmt'
+    string type;
+    int value;
+
     match(IF);
     match('(');
-    expression();
+    expression(type, value);
     match(')');
     statement();
     selectionStmtDash();
@@ -205,23 +244,47 @@ void selectionStmtDash() {
 
 void iterationStmt() {
     // 16. iteration-stmt -> while ( expression ) statement
+    string type;
+    int value;
+
     match(WHILE);
     match('(');
-    expression();
+    expression(type, value);
     match(')');
     statement();
 }
 
-void assignmentStmt() {
+void assignmentStmt(string &type, int &value) {
     // 18. assignment-stmt -> var = expression
-    var();
+    string left_type, right_type;
+    int left_value, right_value;
+    string id = yytext; // if the variable is not declared, we will get an error in the var function 
+    // TODO: if we don't exit after the first error, we need to consider the case where the variable is not declared here also
+    var(left_type, left_value);
     match('=');
-    expression();
+    expression(right_type, right_value);
+
+    if (left_type == right_type) {
+        type = left_type;
+        value = right_value;
+        symbolTable[id].value = value;
+        cout << "Value of " << id << " is " << value << endl;
+    } else {
+        semanticErrorMessage("Type mismatch in assignment statement");
+    }
 }
 
-void var() {
+void var(string &type, int &value) {
     // 19. var -> ID var'
-    match(ID);
+    string id = yytext;
+    match(ID); 
+    if (symbolTable.count(id) == 0) {
+        semanticErrorMessage("The variable " + id + " is not declared");
+    } else {
+        type = symbolTable[id].type;
+    }
+
+    // TODO: what about arrays?
     varDash();
 }
 
@@ -229,22 +292,37 @@ void varDash() {
     // 19'. var' -> ε | [ expression ]
     if (lookahead == '[') {
         match('[');
-        expression();
+        string exp_type;
+        int exp_val;
+        expression(exp_type, exp_val);
         match(']');
     }
 }
 
-void expression() {
+void expression(string &type, int &value) {
     // 20. expression -> additive-expression expression'
-    additiveExpression();
-    expressionDash();
+
+    string add_exp_type, exp_dash_type;
+    int add_exp_val, exp_dash_val;
+    additiveExpression(add_exp_type, add_exp_val);
+
+    if (lookahead == RELOP) {
+        expressionDash(exp_dash_type, exp_dash_val);
+        // TODO
+    } else {
+        type = add_exp_type;
+        value = add_exp_val;
+    }
 }
 
-void expressionDash() {
+void expressionDash(string &type, int &value) {
     // 20'. expression' -> relop additive-expression expression' | ε
     while (lookahead == RELOP) {
         relop();
-        additiveExpression();
+
+        string add_exp_type;
+        int add_exp_val;
+        additiveExpression(add_exp_type, add_exp_val);
     }
 }
 
@@ -253,17 +331,40 @@ void relop() {
     match(RELOP);
 }
 
-void additiveExpression() {
+void additiveExpression(string &type, int &val) {
     // 22. additive-expression-> term additive-expression'
-    term();
-    additiveExpressionDash();
+    string term_type;
+    int term_val;
+    string add_exp_dash_type;
+    int add_exp_dash_val;
+    term(term_type, term_val);
+
+    if (lookahead == '+' || lookahead == '-') {
+        additiveExpressionDash(add_exp_dash_type, add_exp_dash_val);
+
+        if (term_type == add_exp_dash_type) {
+            type = term_type;
+        } else {
+            semanticErrorMessage("Type mismatch in additive expression");
+        }
+    } else {
+        type = term_type;
+        val = term_val;
+    }
+    // val = term_val + add_exp_dash_val;
 }
 
-void additiveExpressionDash() {
+void additiveExpressionDash(string &type, int &val) {
     // 22'. additiveExpressionDash -> addop term additiveExpression' | ε
+
+    string res = "";
     while (lookahead == '+' || lookahead == '-') {
+        char op = lookahead;
         addop();
-        term();
+
+        string term_type;
+        int term_val;
+        term(term_type, term_val);
     }
 }
 
@@ -276,19 +377,45 @@ void addop() {
     }
 }
 
-void term() {
+void term(string &type, int &val) {
     // 24. term -> factor term'
-    factor();
-    termDash();
+
+    string factor_type, term_dash_type;
+    int factor_val, term_dash_val;
+    factor(factor_type, factor_val);
+
+    if (lookahead == '*' || lookahead == '/') {
+        termDash(term_dash_type, term_dash_val);
+
+        if (factor_type == term_dash_type) {
+            type = factor_type;
+        } else {
+            semanticErrorMessage("Type mismatch in term");
+        }
+    } else {
+        type = factor_type;
+        val = factor_val;
+    }
 }
 
-void termDash() {
+void termDash(string &type, int &val) {
     // 24'. term' -> mulop factor term' | ε
     while (lookahead == '*' || lookahead == '/') {
         mulop();
-        termDash();
-        factor();
+
+        string factor_type, term_dash_type;
+        int factor_val, term_dash_val;
+        termDash(term_dash_type, term_dash_val);
+        factor(factor_type, factor_val);
+
+        if (factor_type == term_dash_type) {
+            type = factor_type;
+        } else {
+            semanticErrorMessage("Type mismatch in term'");
+        }
     }
+
+    // TODO: Implement the logic for multiplication and division, evaluate and assign the value to val
 }
 
 void mulop() {
@@ -300,19 +427,26 @@ void mulop() {
     }
 }
 
-void factor() {
+void factor(string &type, int &val) {
     // 26. factor -> (expression) | var | NUM
+
+    string child_type;
+    int child_val;
     switch (lookahead) {
     case '(':
         match('(');
-        expression();
+        expression(child_type, child_val);
         match(')');
         break;
     case ID:
-        var();
+        var(child_type, child_val);
         break;
     case NUM:
+        val = atoi(yytext);
+        // TODO: accomodate for float (in all functions)
         match(NUM);
+        // TODO: Assign the value to val
+        // TODO: Assign the type to type
         break;
     default:
         syntaxErrorMessage("Unexpected factor");
@@ -326,6 +460,14 @@ int main() {
         syntaxErrorToken(lookahead, END_OF_FILE);
     }
     cout << "Parsing completed successfully.\n" << endl;
+
+    // Print the symbol table
+    cout << "Symbol Table: " << endl;
+    for (auto &[key, entry] : symbolTable) {
+        cout << "Name: " << entry.name << ", Type: " << entry.type << ", Value: " << entry.value
+             << ", Declaration Line: " << entry.declaration_line_number << endl;
+    }
+
     // printf("Parsing completed successfully.\n");
 }
 
@@ -339,13 +481,18 @@ void match(int expected) {
 
 void syntaxErrorMessage(string message) {
     cout << "Syntax error: " << message << " at line " << yylineno << ", column " << yycolumn << "\n";
-    // printf("Syntax error: %s at line %d, column %d\n", message, yylineno, yycolumn);
     exit(1);
 }
 
+void semanticErrorMessage(string message) {
+    cout << "Semantic error at line " << yylineno << ", col " << yycolumn << ": " << message << "\n";
+    // TODO: Should we exit after the first error or not?
+    // exit(1);
+}
+
 void syntaxError(string message, string lookAheadToken, string expectedTokens) {
-    cout << "Syntax error: " << message << " at line " << yylineno << ", column " << yycolumn << ". Saw '" << lookAheadToken
-         << "' but expected: " << expectedTokens << "\n";
+    cout << "Syntax error: " << message << " at line " << yylineno << ", column " << yycolumn << ". Saw '"
+         << lookAheadToken << "' but expected: " << expectedTokens << "\n";
     // printf("Syntax error: %s at line %d, column %d. Saw '%s' but expected: %s\n", message, yylineno, yycolumn,
     //        lookAheadToken, expectedTokens);
     exit(1);

@@ -1,8 +1,9 @@
 Program main {
 	int x5_2;
 	float g;
-	float arr[6;
-	if (g) x5_2=5.9 
-	else 
-		while(5+8) arr[3]=30e2
+	float arr[6];
+	int x;
+	int yy;
+	x = 5
+	y = 10
 }.

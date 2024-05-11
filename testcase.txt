@@ -4,6 +4,6 @@ Program main {
 	float arr[6];
 	int x;
 	int yy;
-	x = 5
-	y = 10
+	x = 5+6*2
+	/* y = 10 */
 }.

@@ -16,7 +16,7 @@ notletterdigit [^a-zA-Z0-9 ]
 comment     "/*"
 special     [+|\-|*|/|=|;|,|.|(|)|\[|\]|{|}]
 
-num (({digit}+)|({digit}+)"."({digit}*))(("E"|"e")(("+"|"-")?)({digit}+))?
+num (({digit}+)|({digit}+)"."({digit}*))(("E"|"e")(("+"|"-")?)({digit}+))?  
 wrong_num (({digit}+)|({digit}+)"."({digit}*))(("E"|"e")(("+"|"-")?))
 id {letter}({letter}|{digit})*(("."|"#"|"$"|"_")?({letter}|{digit})+)?
 wrong_id {letter}({letter}|{digit})*("."|"#"|"$"|"_")({notletterdigit}+)

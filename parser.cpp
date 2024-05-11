@@ -1,9 +1,5 @@
 #include "tokens.h"
-#include <ctype.h>
-#include <iostream>
-#include <map>
-#include <stdio.h>
-#include <stdlib.h>
+#include <bits/stdc++.h>
 using namespace std;
 
 int lookahead;
@@ -14,7 +10,7 @@ void declarationList();
 void declarationListDash();
 void declaration();
 void varDeclaration(string &var_type, int &var_value);
-void varDeclarationDash();
+void varDeclarationDash(string &var_type, string &id);
 void typeSpecifier(string &type);
 void params();
 void paramList();
@@ -29,8 +25,8 @@ void selectionStmt();
 void selectionStmtDash();
 void iterationStmt();
 void assignmentStmt(string &type, int &value);
-void var(string &type, int &value);
-void varDash();
+void var(string &id, string &type, int &value);
+void varDash(string &id, string &type, int &value);
 void expression(string &type, int &value);
 void expressionDash(string &type, int &value);
 void relop();
@@ -58,10 +54,10 @@ struct symbolTableEntry {
 
 map<string, symbolTableEntry> symbolTable;
 
-void program() {
+void program() {    
     // 1. program → Program ID {declaration-list statement-list}
     match(PROGRAM);
-    // TODO: do we need to store the program name?
+    symbolTable[yytext] = {yytext, "Program", 0, yylineno};
     match(ID);
     match('{');
     declarationList();
@@ -105,17 +101,30 @@ void varDeclaration(string &var_type, int &var_value) {
         semanticErrorMessage("The variable " + id + " is already declared at line " +
                              to_string(symbolTable[id].declaration_line_number));
     }
+    if (symbolTable.count(id + "[0]") > 0) {
+        semanticErrorMessage("The variable " + id + " is already declared at line " +
+                             to_string(symbolTable[id + "[0]"].declaration_line_number));
+    }
     symbolTable[id] = {id, type, var_value, yylineno};
     // TODO: what if the variable is an array?
-    varDeclarationDash();
+    varDeclarationDash(var_type, id);
 }
 
-void varDeclarationDash() {
+void varDeclarationDash(string &var_type, string &id) {
     // 4'. var-declaration' → ; | [ NUM ] ;
     if (lookahead == '[') {
         match('[');
+        int num = stoi(yytext);
         match(NUM);
         match(']');
+
+        if (num <= 0) {
+            semanticErrorMessage("Array size should be greater than 0");
+        }
+        symbolTable.erase(id);
+        for (int i = 0; i < num; i++) {
+            symbolTable[id + "[" + to_string(i) + "]"] = {id + "[" + to_string(i) + "]", var_type, 0, yylineno};
+        }
     }
     match(';');
 }
@@ -260,7 +269,7 @@ void assignmentStmt(string &type, int &value) {
     int left_value, right_value;
     string id = yytext; // if the variable is not declared, we will get an error in the var function 
     // TODO: if we don't exit after the first error, we need to consider the case where the variable is not declared here also
-    var(left_type, left_value);
+    var(id, left_type, left_value);
     match('=');
     expression(right_type, right_value);
 
@@ -274,21 +283,22 @@ void assignmentStmt(string &type, int &value) {
     }
 }
 
-void var(string &type, int &value) {
+void var(string &id, string &type, int &value) {
     // 19. var -> ID var'
-    string id = yytext;
+    id = yytext;
     match(ID); 
+    
+    varDash(id, type, value);
+
     if (symbolTable.count(id) == 0) {
         semanticErrorMessage("The variable " + id + " is not declared");
     } else {
         type = symbolTable[id].type;
+        value = symbolTable[id].value;
     }
-
-    // TODO: what about arrays?
-    varDash();
 }
 
-void varDash() {
+void varDash(string &id, string &type, int &value) {
     // 19'. var' -> ε | [ expression ]
     if (lookahead == '[') {
         match('[');
@@ -296,6 +306,8 @@ void varDash() {
         int exp_val;
         expression(exp_type, exp_val);
         match(']');
+
+        id += "[" + to_string(exp_val) + "]";
     }
 }
 
@@ -430,6 +442,7 @@ void mulop() {
 void factor(string &type, int &val) {
     // 26. factor -> (expression) | var | NUM
 
+    string id;
     string child_type;
     int child_val;
     switch (lookahead) {
@@ -439,8 +452,8 @@ void factor(string &type, int &val) {
         match(')');
         break;
     case ID:
-        var(child_type, child_val);
-        break;
+        var(id, child_type, child_val);
+        break;  
     case NUM:
         val = atoi(yytext);
         // TODO: accomodate for float (in all functions)

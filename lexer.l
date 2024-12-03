@@ -1,10 +1,11 @@
 %{
-#include "tokens.h"
+// #include "tokens.h"
+#include "yacc.tab.h" 
 int is_comment = 0; 
 int yycolumn = 1;
 int update_col_return(char* text, int ret);
 
-extern "C" int yywrap() {
+int yywrap() {
     return 1;
 }
 %}
@@ -26,19 +27,17 @@ wrong_id {letter}({letter}|{digit})*("."|"#"|"$"|"_")({notletterdigit}+)
 "else"                              { return update_col_return(yytext, ELSE); }
 "if"                                { return update_col_return(yytext, IF); }
 "int"                               { return update_col_return(yytext, INT); }
-"return"                            { return update_col_return(yytext, RETURN); }
-"void"                              { return update_col_return(yytext, VOID); }
 "float"                             { return update_col_return(yytext, FLOAT); }
 "while"                             { return update_col_return(yytext, WHILE); }
 "Program"                           { return update_col_return(yytext, PROGRAM); }
 {special}                           { return update_col_return(yytext, *yytext); } // return the ASCII character itself
 
-"<="                                { return update_col_return(yytext, RELOP); }
-"<"                                 { return update_col_return(yytext, RELOP); }
-">="                                { return update_col_return(yytext, RELOP); }
-">"                                 { return update_col_return(yytext, RELOP); }
-"=="                                { return update_col_return(yytext, RELOP); }
-"!="                                { return update_col_return(yytext, RELOP); }
+"<="                                { return update_col_return(yytext, LE); }
+"<"                                 { return update_col_return(yytext, LT); }
+">="                                { return update_col_return(yytext, GE); }
+">"                                 { return update_col_return(yytext, GT); }
+"=="                                { return update_col_return(yytext, EQ); }
+"!="                                { return update_col_return(yytext, NE); }
 
 {num}                               { return update_col_return(yytext, NUM); } 
 {id}                                { return update_col_return(yytext, ID); }
@@ -49,7 +48,6 @@ wrong_id {letter}({letter}|{digit})*("."|"#"|"$"|"_")({notletterdigit}+)
 {wrong_id}                          { printf("ERR: Invalid identifier format at line %d, column %d\n", yylineno, yycolumn); }
 .                                   { printf("ERR: Unknown character %c at line %d, column %d\n", *yytext, yylineno, yycolumn); 
                                     ++yycolumn; }
-<<EOF>>                             { return END_OF_FILE; }
 <IN_COMMENT>{
   "*/"                              { yycolumn += strlen(yytext); is_comment = 0; BEGIN(0); }
   "\n"                              { ++yylineno; yycolumn = 1; }

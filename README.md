@@ -30,3 +30,29 @@ To run the parser with an input file `testcase.txt`, use the following command:
 ```bash
 ./parser < testcase.txt
 ```
+
+
+# For YACC Compiler 
+
+## Files Description
+
+- `lexer.l`: Contains the Lex rules for tokenizing the input.
+- `yacc.y`: Contains the parsing rules.
+
+## Compilation
+
+To compile the scanner and parser, execute the following commands in your terminal:
+
+```bash
+bison -d yacc.y                     # Generate the yacc.tab.h file for the token and yacc.tab.c 
+flex -o lexer.c lexer.l         # Generate the scanner C source file from the Lex file
+gcc -o parser lexer.c yacc.tab.c  # Compile the scanner and parser together into an executable
+```
+
+## Running the Parser
+
+To run the parser with an input file `testcase.txt`, use the following command:
+
+```bash
+./parser < testcase.txt
+```

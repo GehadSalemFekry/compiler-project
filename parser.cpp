@@ -49,7 +49,7 @@ void semanticErrorMessage(string message);
 struct symbolTableEntry {
     string name;
     string type;
-    int value;
+    double value;
     int declaration_line_number;
 };
 
@@ -106,7 +106,7 @@ void varDeclaration(string &var_type, int &var_value) {
         semanticErrorMessage("The variable " + id + " is already declared at line " +
                              to_string(symbolTable[id + "[0]"].declaration_line_number));
     }
-    symbolTable[id] = {id, type, var_value, yylineno};
+    symbolTable[id] = {id, type, 0, yylineno};
     varDeclarationDash(var_type, id);
 }
 
@@ -294,6 +294,8 @@ void var(string &id, string &type, double &value) {
     } else {
         type = symbolTable[id].type;
         value = symbolTable[id].value;
+        // cout << "var " << id << " type " << type << "\n"; 
+
     }
 }
 
@@ -304,9 +306,14 @@ void varDash(string &id, string &type) {
         string exp_type;
         double exp_val;
         expression(exp_type, exp_val);
+        if (exp_type != "INT") {
+            semanticErrorMessage("Array index can't be float");
+        }
+
         match(']');
 
-        id += "[" + to_string(exp_val) + "]";
+        // cout << exp_val << "\n";
+        id += "[" + to_string(int(exp_val)) + "]";
     }
 }
 
@@ -321,7 +328,9 @@ void expression(string &type, double &value) {
         string op = yytext;
         expressionDash(exp_dash_type, exp_dash_value);
 
-        if (add_exp_type == exp_dash_type) {
+        // cout << "Types: " << add_exp_type << " " << exp_dash_type << "\n";
+
+            if (add_exp_type == exp_dash_type) {
             type = add_exp_type;
 
             if (op == "==") {
@@ -361,8 +370,8 @@ void expression(string &type, double &value) {
                     value = 0;
                 }
             }
-
-        } else {
+        }
+        else {
             semanticErrorMessage("Type mismatch in expresion");
         }
 
@@ -371,6 +380,8 @@ void expression(string &type, double &value) {
         type = add_exp_type;
         value = add_exp_value;
     }
+
+    // cout << "exp type " << type << "\n";
 }
 
 int comp(double a, double b) {
@@ -476,6 +487,8 @@ void additiveExpression(string &type, double &value) {
         type = term_type;
         value = term_val;
     }
+
+    // cout << "add type " << type << "\n";
 }
 
 void additiveExpressionDash(string &type, double &value) {
@@ -551,6 +564,8 @@ void term(string &type, double &value) {
         type = factor_type;
         value = factor_val;
     }
+
+    // cout << "term type " << type << "\n";
 }
 
 void termDash(string &type, double &value) {
@@ -624,17 +639,20 @@ void factor(string &type, double &value) {
         //     }
         // }
 
-        value = atof(yytext);
-        if (floor(value) == value) {
-            type = "INT";
+        child_val = atof(yytext);
+        if (floor(child_val) == child_val) {
+            child_type = "INT";
         } else {
-            type = "FLOAT";
+            child_type = "FLOAT";
         }
         match(NUM);
         break;
     default:
         syntaxErrorMessage("Unexpected factor");
     }
+
+    type = child_type;
+    value = child_val;
 }
 
 int main() {
@@ -648,7 +666,7 @@ int main() {
     // Print the symbol table
     cout << "Symbol Table: " << endl;
     for (auto &[key, entry] : symbolTable) {
-        cout << "Name: " << entry.name << ", Type: " << entry.type << ", Value: " << entry.value
+        cout << "Name: " << entry.name << ", Type: " << entry.type << ", Value: " << (entry.type == "INT" ? int(entry.value) : entry.value)
              << ", Declaration Line: " << entry.declaration_line_number << endl;
     }
 
